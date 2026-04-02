@@ -1,0 +1,49 @@
+# CitizenReport Hub - Git Ignore
+
+# Dependencies
+/vendor/
+/node_modules/
+
+# Configuration
+/config/local.php
+/config/database.local.php
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# Cache
+/cache/
+*.cache
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Uploads (keep directory, ignore files)
+/public/uploads/reports/*
+!/public/uploads/reports/.gitkeep
+
+# Temporary files
+/tmp/
+temp/
+
+# Composer
+composer.lock
+
+# Node
+package-lock.json
+npm-debug.log
+yarn-error.log
