@@ -107,7 +107,7 @@ $router->post('/report/create', [ReportController::class, 'create'], [AuthMiddle
 $router->get('/report/success', [ReportController::class, 'showSuccess'], [AuthMiddleware::class, CitizenMiddleware::class]);
 
 // View Report
-$router->get('/report/view', [ReportController::class, 'view'], [AuthMiddleware::class]);
+$router->get('/report/view', [ReportController::class, 'viewReport'], [AuthMiddleware::class]);
 
 // View Report by Ticket ID
 $router->get('/report/ticket', [ReportController::class, 'viewByTicket'], [AuthMiddleware::class]);

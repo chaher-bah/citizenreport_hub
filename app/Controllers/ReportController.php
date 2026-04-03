@@ -48,16 +48,18 @@ class ReportController extends Controller
         $this->requireCitizen();
 
         $category = $this->post('category', '');
+        $categoryDetail = trim($this->post('category_detail', ''));
         $description = trim($this->post('description', ''));
         $latitude = $this->post('latitude', '');
         $longitude = $this->post('longitude', '');
 
         // Validate input
-        $errors = $this->validateReport($category, $description, $latitude, $longitude);
+        $errors = $this->validateReport($category, $categoryDetail, $description, $latitude, $longitude);
 
         if (!empty($errors)) {
             $_SESSION['old_input'] = [
                 'category' => $category,
+                'category_detail' => $categoryDetail,
                 'description' => $description,
                 'latitude' => $latitude,
                 'longitude' => $longitude,
@@ -75,6 +77,7 @@ class ReportController extends Controller
             if (!$uploadResult['success'] && !empty($uploadResult['errors'])) {
                 $_SESSION['old_input'] = [
                     'category' => $category,
+                    'category_detail' => $categoryDetail,
                     'description' => $description,
                     'latitude' => $latitude,
                     'longitude' => $longitude,
@@ -96,6 +99,7 @@ class ReportController extends Controller
         try {
             $reportData = [
                 'category' => $category,
+                'category_detail' => ($category === 'others') ? 'others-' . $categoryDetail : null,
                 'description' => $description,
                 'latitude' => $coords['latitude'],
                 'longitude' => $coords['longitude'],
@@ -171,7 +175,7 @@ class ReportController extends Controller
     /**
      * View a single report
      */
-    public function view(): void
+    public function viewReport(): void
     {
         $this->requireAuth();
 
@@ -265,6 +269,7 @@ class ReportController extends Controller
      */
     private function validateReport(
         string $category,
+        string $categoryDetail,
         string $description,
         $latitude,
         $longitude
@@ -276,6 +281,8 @@ class ReportController extends Controller
             $errors[] = 'Please select a category.';
         } elseif (!array_key_exists($category, Report::CATEGORIES)) {
             $errors[] = 'Invalid category selected.';
+        } elseif ($category === 'others' && empty($categoryDetail)) {
+            $errors[] = 'Please specify the issue type when selecting Others.';
         }
 
         // Description validation

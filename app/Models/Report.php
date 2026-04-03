@@ -14,7 +14,8 @@ class Report extends Model
         'pothole' => 'Pothole',
         'road_illumination' => 'Road Illumination',
         'security_concerns' => 'Security Concerns',
-        'drivers_disobey_rules' => 'Drivers Disobey Rules'
+        'drivers_disobey_rules' => 'Drivers Disobey Rules',
+        'others' =>'Others'
     ];
 
     /**
@@ -50,10 +51,11 @@ class Report extends Model
     public function createReport(int $userId, array $data): int
     {
         $ticketId = $this->generateTicketId();
-        
+
         return $this->create([
             'user_id' => $userId,
             'category' => $data['category'],
+            'category_detail' => $data['category_detail'] ?? null,
             'description' => $data['description'],
             'latitude' => $data['latitude'],
             'longitude' => $data['longitude'],
@@ -154,11 +156,147 @@ class Report extends Model
      */
     public function getCountByStatus(): array
     {
-        $sql = "SELECT status, COUNT(*) as count 
-                FROM {$this->table} 
+        $sql = "SELECT status, COUNT(*) as count
+                FROM {$this->table}
                 GROUP BY status";
-        
+
         return $this->db->fetchAll($sql);
+    }
+
+    /**
+     * Get reports count by category
+     */
+    public function getCountByCategory(): array
+    {
+        $sql = "SELECT category, COUNT(*) as count
+                FROM {$this->table}
+                GROUP BY category";
+
+        return $this->db->fetchAll($sql);
+    }
+
+    /**
+     * Get reports with pagination, filters, and search
+     */
+    public function getPaginated(int $page = 1, int $perPage = 10, string $category = '', string $status = '', string $search = ''): array
+    {
+        $offset = ($page - 1) * $perPage;
+        $sql = "SELECT r.*, u.cin as user_cin, u.email as user_email
+                FROM {$this->table} r
+                JOIN users u ON r.user_id = u.id
+                WHERE 1=1";
+        $params = [];
+
+        // Filter by category
+        if (!empty($category)) {
+            $sql .= " AND r.category = :category";
+            $params['category'] = $category;
+        }
+
+        // Filter by status
+        if (!empty($status)) {
+            $sql .= " AND r.status = :status";
+            $params['status'] = $status;
+        }
+
+        // Search by ticket_id or description
+        if (!empty($search)) {
+            $sql .= " AND (r.ticket_id LIKE :search OR r.description LIKE :search)";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $sql .= " ORDER BY r.created_at DESC LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->db->getConnection()->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":{$key}", $value);
+        }
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get total count with filters (for pagination)
+     */
+    public function getCountWithFilters(string $category = '', string $status = '', string $search = ''): int
+    {
+        $sql = "SELECT COUNT(*) as count
+                FROM {$this->table} r
+                WHERE 1=1";
+        $params = [];
+
+        if (!empty($category)) {
+            $sql .= " AND r.category = :category";
+            $params['category'] = $category;
+        }
+
+        if (!empty($status)) {
+            $sql .= " AND r.status = :status";
+            $params['status'] = $status;
+        }
+
+        if (!empty($search)) {
+            $sql .= " AND (r.ticket_id LIKE :search OR r.description LIKE :search)";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $stmt = $this->db->getConnection()->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":{$key}", $value);
+        }
+        $stmt->execute();
+        $result = $stmt->fetch();
+
+        return (int) ($result['count'] ?? 0);
+    }
+
+    /**
+     * Get report with media and assignment
+     */
+    public function getWithMediaAndAssignment(int $id): ?array
+    {
+        $report = $this->find($id);
+        if (!$report) {
+            return null;
+        }
+
+        $reportMediaModel = new ReportMedia();
+        $report['media'] = $reportMediaModel->getByReportId($id);
+
+        $assignmentModel = new Assignment();
+        $report['assignment'] = $assignmentModel->getByReportId($id);
+
+        return $report;
+    }
+
+    /**
+     * Update report status (with status update logging)
+     */
+    public function updateStatusWithLog(int $reportId, string $newStatus, string $comment, int $updatedBy): bool
+    {
+        if (!array_key_exists($newStatus, self::STATUSES)) {
+            throw new InvalidArgumentException("Invalid status: {$newStatus}");
+        }
+
+        $this->db->getConnection()->beginTransaction();
+
+        try {
+            // Update report status
+            $this->update($reportId, ['status' => $newStatus]);
+
+            // Log the status update
+            $statusUpdateModel = new StatusUpdate();
+            $statusUpdateModel->addStatusUpdate($reportId, $newStatus, $comment, $updatedBy);
+
+            $this->db->getConnection()->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->getConnection()->rollBack();
+            throw $e;
+        }
     }
 
     /**

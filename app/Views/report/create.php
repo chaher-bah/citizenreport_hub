@@ -10,12 +10,25 @@
             <select id="category" name="category" class="form-control" required>
                 <option value="">Select a category...</option>
                 <?php foreach ($categories as $value => $label): ?>
-                    <option value="<?= htmlspecialchars($value) ?>" 
+                    <option value="<?= htmlspecialchars($value) ?>"
                             <?= ($old['category'] ?? '') === $value ? 'selected' : '' ?>>
                         <?= htmlspecialchars($label) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
+        </div>
+
+        <div class="form-group" id="categoryDetailGroup" style="display: none;">
+            <label for="category_detail" class="form-label">Please specify the issue *</label>
+            <input
+                type="text"
+                id="category_detail"
+                name="category_detail"
+                class="form-control"
+                placeholder="Describe the issue type..."
+                value="<?= htmlspecialchars($old['category_detail'] ?? '') ?>"
+            >
+            <small style="color: #666;">Please provide a brief description of the issue.</small>
         </div>
 
         <div class="form-group">
@@ -91,6 +104,10 @@
         </div>
     </form>
 </div>
+
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
     // Initialize map
@@ -186,7 +203,31 @@
             }
         }
     });
-    
+
+    // Toggle category detail field
+    document.getElementById('category').addEventListener('change', function() {
+        const detailGroup = document.getElementById('categoryDetailGroup');
+        const detailInput = document.getElementById('category_detail');
+
+        if (this.value === 'others') {
+            detailGroup.style.display = 'block';
+            detailInput.required = true;
+        } else {
+            detailGroup.style.display = 'none';
+            detailInput.required = false;
+            detailInput.value = '';
+        }
+    });
+
+    // Initialize category detail on page load if "others" is pre-selected
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('category');
+        if (categorySelect.value === 'others') {
+            document.getElementById('categoryDetailGroup').style.display = 'block';
+            document.getElementById('category_detail').required = true;
+        }
+    });
+
     // Initialize map when page loads
     document.addEventListener('DOMContentLoaded', initMap);
 </script>

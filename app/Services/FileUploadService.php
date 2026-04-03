@@ -11,7 +11,7 @@ class FileUploadService
 
     public function __construct()
     {
-        $this->config = require __DIR__ . '/../config/app.php';
+        $this->config = require BASE_PATH . '/config/app.php';
     }
 
     /**

@@ -1,7 +1,7 @@
 <div style="max-width: 900px; margin: 0 auto;">
     <div class="d-flex justify-between align-center mb-3">
         <h1>📋 Report Details</h1>
-        <a href="<?= $this->isWorker() ? '/admin/dashboard' : '/dashboard' ?>" class="btn btn-secondary">
+        <a href="<?= BASE_URL . ($this->isWorker() ? '/admin/dashboard' : '/dashboard') ?>" class="btn btn-secondary">
             ← Back
         </a>
     </div>
@@ -76,13 +76,13 @@
                 <?php foreach ($report['media'] as $media): ?>
                     <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
                         <?php if ($media['type'] === 'photo'): ?>
-                            <img src="/<?= htmlspecialchars($media['file_path']) ?>" 
-                                 alt="Report media" 
+                            <img src="<?= BASE_URL ?>/<?= htmlspecialchars($media['file_path']) ?>"
+                                 alt="Report media"
                                  style="width: 100%; height: 150px; object-fit: cover; cursor: pointer;"
                                  onclick="openLightbox(this.src)">
                         <?php else: ?>
                             <video controls style="width: 100%; height: 150px; object-fit: cover;">
-                                <source src="/<?= htmlspecialchars($media['file_path']) ?>" 
+                                <source src="<?= BASE_URL ?>/<?= htmlspecialchars($media['file_path']) ?>"
                                         type="<?= htmlspecialchars($media['type'] === 'video' ? 'video/mp4' : 'video/webm') ?>">
                                 Your browser does not support the video tag.
                             </video>
@@ -143,6 +143,10 @@
     <img id="lightbox-img" src="" alt="" style="max-width: 90%; max-height: 90%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
     <button onclick="closeLightbox()" style="position: absolute; top: 20px; right: 20px; background: white; border: none; font-size: 2rem; cursor: pointer; padding: 0.5rem 1rem; border-radius: 4px;">&times;</button>
 </div>
+
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
     // Initialize map

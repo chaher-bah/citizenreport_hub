@@ -212,12 +212,7 @@ bladna/
 - Session-based authentication
 - File upload validation (type, size)
 
-## Browser Support
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
 
 ## Future Enhancements (Upcoming Sprints)
 
