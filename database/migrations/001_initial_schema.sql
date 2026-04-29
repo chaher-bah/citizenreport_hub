@@ -95,3 +95,18 @@ VALUES ('WORKER001', 'worker@citizenhub.com', '+1234567890', '$2y$10$92IXUNpkjO0
 -- Password is 'password123' (hashed with bcrypt)
 INSERT INTO users (cin, email, phone, password_hash, role) 
 VALUES ('CITIZEN001', 'citizen@citizenhub.com', '+0987654321', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'citizen');
+
+INSERT INTO branches (name, contact_number) VALUES
+('Police', '73652951'),
+('National Gard', '75625321'),
+('Baladia Worker', '25369521'),
+('STEG ', '563263253'),
+('SONEDE ', '568263253'),
+('7imaya ', '563363253'),
+;
+
+INSERT INTO categories (name, description, default_branch_id) VALUES
+('Pothole', 'Road surface damage', 23),
+('Road Illumination', 'Street lighting issues', 23),
+('Security Concerns', 'Crime or safety issues', 21),
+('Drivers Disobey Rules', 'Traffic violations', 22);

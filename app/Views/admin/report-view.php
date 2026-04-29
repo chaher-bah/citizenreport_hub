@@ -1,8 +1,8 @@
 <div style="max-width: 900px; margin: 0 auto;">
     <div class="d-flex justify-between align-center mb-3">
-        <h1>📋 Report Details</h1>
-        <a href="<?= BASE_URL . ($this->isWorker() ? '/admin/dashboard' : '/dashboard') ?>" class="btn btn-secondary">
-            ← Back
+        <h1>📋 Report Details (Worker View)</h1>
+        <a href="<?= BASE_URL ?>/admin/dashboard" class="btn btn-secondary">
+            ← Back to Dashboard
         </a>
     </div>
 
@@ -25,23 +25,22 @@
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
         <div class="card">
             <h3 class="card-title">Report Information</h3>
-            
+
             <div class="form-group">
                 <label style="font-weight: 600; color: #666;">Category</label>
                 <p><?= htmlspecialchars($report['category_name'] ?? 'N/A') ?></p>
-                
                 <?php if (!empty($report['category_detail'])): ?>
                     <p style="color: #666; font-style: italic; margin-top: 0.25rem;">
                         Detail: <?= htmlspecialchars($report['category_detail']) ?>
                     </p>
                 <?php endif; ?>
             </div>
-            
+
             <div class="form-group">
                 <label style="font-weight: 600; color: #666;">Description</label>
                 <p style="white-space: pre-wrap;"><?= htmlspecialchars($report['description']) ?></p>
             </div>
-            
+
             <div class="form-group">
                 <label style="font-weight: 600; color: #666;">Status</label>
                 <p>
@@ -49,6 +48,12 @@
                         <?= htmlspecialchars($statuses[$report['status']] ?? $report['status']) ?>
                     </span>
                 </p>
+            </div>
+            <?php echo "<script>console.log(" . json_encode($report) . ");</script>"; ?>
+            <div class="form-group">
+                <label style="font-weight: 600; color: #666;">Citizen</label>
+                <p><?= htmlspecialchars($report['user_cin']) ?></p>
+                <p style="color: #666; font-size: 0.875rem;"><?= htmlspecialchars($report['user_email']) ?></p>
             </div>
         </div>
 
@@ -64,9 +69,9 @@
                 </div>
             </div>
             <div style="margin-top: 1rem;">
-                <a href="<?= $geoService->getGoogleMapsUrl($report['latitude'], $report['longitude']) ?>" 
-                   target="_blank" 
-                   class="btn btn-secondary" 
+                <a href="<?= $geoService->getGoogleMapsUrl($report['latitude'], $report['longitude']) ?>"
+                   target="_blank"
+                   class="btn btn-secondary"
                    style="font-size: 0.875rem; padding: 0.5rem 1rem;">
                     🗺️ Open in Google Maps
                 </a>
@@ -77,8 +82,8 @@
     <!-- Assignment Info -->
     <?php if (!empty($report['assignment'])): ?>
     <div class="card">
-        <h3 class="card-title">📌 Assignment</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <h3 class="card-title">📌 Current Assignment</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
             <div>
                 <strong>Branch:</strong>
                 <span class="badge badge-info">
@@ -112,7 +117,7 @@
                         <?php else: ?>
                             <video controls style="width: 100%; height: 150px; object-fit: cover;">
                                 <source src="<?= BASE_URL ?>/<?= htmlspecialchars($media['file_path']) ?>"
-                                        type="<?= htmlspecialchars($media['type'] === 'video' ? 'video/mp4' : 'video/webm') ?>">
+                                        type="video/mp4">
                                 Your browser does not support the video tag.
                             </video>
                         <?php endif; ?>
@@ -125,10 +130,61 @@
         </div>
     <?php endif; ?>
 
+    <!-- Worker Actions -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+        <!-- Change Status -->
+        <div class="card">
+            <h3 class="card-title">🔄 Change Status</h3>
+            <form method="POST" action="<?= BASE_URL ?>/admin/report/update-status">
+                <input type="hidden" name="report_id" value="<?= $report['id'] ?>">
+                <div class="form-group">
+                    <label class="form-label">New Status</label>
+                    <select name="status" class="form-control" required>
+                        <?php foreach ($statuses as $key => $label): ?>
+                            <option value="<?= htmlspecialchars($key) ?>" <?= $key === $report['status'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Comment (optional)</label>
+                    <textarea name="comment" class="form-control" rows="3" placeholder="Add a comment about this status change..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Update Status</button>
+            </form>
+        </div>
+
+        <!-- Assign Branch -->
+        <div class="card">
+            <h3 class="card-title">📌 Assign to Branch</h3>
+            <form method="POST" action="<?= BASE_URL ?>/admin/report/assign">
+                <input type="hidden" name="report_id" value="<?= $report['id'] ?>">
+                <div class="form-group">
+                    <label class="form-label">Branch</label>
+                    <select name="branch_id" class="form-control" required>
+                        <option value="">Select a branch...</option>
+                        <?php foreach ($branches as $branch): ?>
+                            <option value="<?= $branch['id'] ?>" <?= (!empty($report['assignment']) && $report['assignment']['branch_id'] == $branch['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($branch['name']) ?>
+                                <?php if (!empty($branch['contact_number'])): ?>
+                                    (<?= htmlspecialchars($branch['contact_number']) ?>)
+                                <?php endif; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <?= !empty($report['assignment']) ? 'Update Assignment' : 'Assign Report' ?>
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Status History -->
-    <div class="card">
+    <div class="card" style="margin-top: 1.5rem;">
         <h3 class="card-title">📜 Status History</h3>
-        
+
         <?php if (empty($statusUpdates)): ?>
             <p style="color: #666; text-align: center; padding: 2rem;">
                 No status updates yet.
@@ -136,11 +192,11 @@
         <?php else: ?>
             <div style="position: relative; padding-left: 2rem;">
                 <div style="position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #ddd;"></div>
-                
+
                 <?php foreach ($statusUpdates as $index => $update): ?>
                     <div style="position: relative; margin-bottom: 1.5rem; padding-bottom: 1.5rem; <?= $index < count($statusUpdates) - 1 ? 'border-bottom: 1px solid #eee;' : '' ?>">
                         <div style="position: absolute; left: -2rem; top: 0; width: 24px; height: 24px; background: #1a73e8; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
-                        
+
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                             <span class="badge badge-<?= htmlspecialchars($update['status']) ?>">
                                 <?= htmlspecialchars($statuses[$update['status']] ?? $update['status']) ?>
@@ -149,15 +205,15 @@
                                 <?= date('M d, Y g:i A', strtotime($update['created_at'])) ?>
                             </small>
                         </div>
-                        
+
                         <?php if (!empty($update['comment'])): ?>
                             <p style="margin: 0.5rem 0 0 0; color: #666; font-style: italic;">
                                 "<?= htmlspecialchars($update['comment']) ?>"
                             </p>
                         <?php endif; ?>
-                        
+
                         <small style="color: #999;">
-                            Updated by: <?= htmlspecialchars($update['updated_by_cin']) ?> 
+                            Updated by: <?= htmlspecialchars($update['updated_by_cin']) ?>
                             (<?= ucfirst($update['updated_by_role']) ?>)
                         </small>
                     </div>
@@ -178,15 +234,13 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    console.log(<?= json_encode($report) ?>);
-
     // Initialize map
     const map = L.map('map').setView([<?= $report['latitude'] ?>, <?= $report['longitude'] ?>], 16);
-    
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
-    
+
     L.marker([<?= $report['latitude'] ?>, <?= $report['longitude'] ?>]).addTo(map)
         .bindPopup('Report Location')
         .openPopup();
@@ -197,12 +251,12 @@
         document.getElementById('lightbox').style.display = 'block';
         document.body.style.overflow = 'hidden';
     }
-    
+
     function closeLightbox() {
         document.getElementById('lightbox').style.display = 'none';
         document.body.style.overflow = 'auto';
     }
-    
+
     // Close lightbox on escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {

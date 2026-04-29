@@ -115,7 +115,28 @@ $router->get('/report/ticket', [ReportController::class, 'viewByTicket'], [AuthM
 // ============== Worker/Admin Routes ==============
 
 // Worker Dashboard
-$router->get('/admin/dashboard', [DashboardController::class, 'workerDashboard'], [AuthMiddleware::class, WorkerMiddleware::class]);
+$router->get('/admin/dashboard', [AdminController::class, 'dashboard'], [AuthMiddleware::class, WorkerMiddleware::class]);
+
+// View Report (Worker)
+$router->get('/admin/report/view', [AdminController::class, 'viewReport'], [AuthMiddleware::class, WorkerMiddleware::class]);
+
+// Update Status (Worker)
+$router->post('/admin/report/update-status', [AdminController::class, 'updateStatus'], [AuthMiddleware::class, WorkerMiddleware::class]);
+
+// Assign Branch (Worker)
+$router->post('/admin/report/assign', [AdminController::class, 'assignBranch'], [AuthMiddleware::class, WorkerMiddleware::class]);
+
+// Category Management
+$router->get('/admin/categories', [AdminController::class, 'manageCategories'], [AuthMiddleware::class, WorkerMiddleware::class]);
+$router->post('/admin/categories/create', [AdminController::class, 'createCategory'], [AuthMiddleware::class, WorkerMiddleware::class]);
+$router->post('/admin/categories/update', [AdminController::class, 'updateCategory'], [AuthMiddleware::class, WorkerMiddleware::class]);
+$router->post('/admin/categories/delete', [AdminController::class, 'deleteCategory'], [AuthMiddleware::class, WorkerMiddleware::class]);
+
+// Branch Management
+$router->get('/admin/branches', [AdminController::class, 'manageBranches'], [AuthMiddleware::class, WorkerMiddleware::class]);
+$router->post('/admin/branches/create', [AdminController::class, 'createBranch'], [AuthMiddleware::class, WorkerMiddleware::class]);
+$router->post('/admin/branches/update', [AdminController::class, 'updateBranch'], [AuthMiddleware::class, WorkerMiddleware::class]);
+$router->post('/admin/branches/delete', [AdminController::class, 'deleteBranch'], [AuthMiddleware::class, WorkerMiddleware::class]);
 
 // ============== Dispatch ==============
 

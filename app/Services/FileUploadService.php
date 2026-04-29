@@ -153,9 +153,11 @@ class FileUploadService
      */
     private function moveFile(array $file): array
     {
-        $type = $this->getFileType($file['type']);
-        $extension = $this->getExtensionForType($file['type']);
-        
+        // Detect actual mime type from file content, not browser-provided type
+        $actualMimeType = mime_content_type($file['tmp_name']);
+        $type = $this->getFileType($actualMimeType);
+        $extension = $this->getExtensionForType($actualMimeType);
+
         // Generate unique filename
         $filename = uniqid() . '_' . time() . '.' . $extension;
         $destination = $this->config['upload_path'] . $filename;

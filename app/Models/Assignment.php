@@ -1,7 +1,7 @@
 <?php
 /**
  * Assignment Model
- * Handles report assignments to branches (police, city_worker, utility_worker, other)
+ * Handles report assignments to branches
  */
 
 class Assignment extends Model
@@ -9,23 +9,13 @@ class Assignment extends Model
     protected string $table = 'assignments';
 
     /**
-     * Valid assignment branches
-     */
-    public const BRANCHES = [
-        'police' => 'Police',
-        'city_worker' => 'City Worker',
-        'utility_worker' => 'Utility Worker',
-        'other' => 'Other',
-    ];
-
-    /**
-     * Get assignment for a report
+     * Get assignment for a report with branch info
      */
     public function getByReportId(int $reportId): ?array
     {
-        $sql = "SELECT a.*, u.cin as assigned_by_cin
+        $sql = "SELECT a.*, b.name as branch_name, b.contact_number as branch_contact
                 FROM {$this->table} a
-                LEFT JOIN users u ON a.assigned_by = u.id
+                JOIN branches b ON a.branch_id = b.id
                 WHERE a.report_id = :report_id
                 ORDER BY a.assigned_at DESC
                 LIMIT 1";
@@ -36,30 +26,25 @@ class Assignment extends Model
     /**
      * Assign or update report to a branch
      */
-    public function assignReport(int $reportId, string $branch, int $assignedBy): int
+    public function assignReport(int $reportId, int $branchId): int
     {
-        if (!array_key_exists($branch, self::BRANCHES)) {
-            throw new InvalidArgumentException("Invalid branch: {$branch}");
-        }
-
         // Check if assignment already exists
         $existing = $this->getByReportId($reportId);
 
         if ($existing) {
             // Update existing assignment
             $sql = "UPDATE {$this->table} 
-                    SET branch = :branch, assigned_at = NOW()
+                    SET branch_id = :branch_id, assigned_at = NOW()
                     WHERE id = :id";
             $stmt = $this->db->getConnection()->prepare($sql);
-            $stmt->execute(['branch' => $branch, 'id' => $existing['id']]);
+            $stmt->execute(['branch_id' => $branchId, 'id' => $existing['id']]);
             return $existing['id'];
         }
 
         // Create new assignment
         return $this->create([
             'report_id' => $reportId,
-            'branch' => $branch,
-            'assigned_by' => $assignedBy,
+            'branch_id' => $branchId,
         ]);
     }
 }

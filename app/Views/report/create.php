@@ -7,12 +7,15 @@
     <form method="POST" action="<?= BASE_URL ?>/report/create" enctype="multipart/form-data" id="reportForm">
         <div class="form-group">
             <label for="category" class="form-label">Category *</label>
-            <select id="category" name="category" class="form-control" required>
+            <select id="category" name="category_id" class="form-control" required>
                 <option value="">Select a category...</option>
-                <?php foreach ($categories as $value => $label): ?>
-                    <option value="<?= htmlspecialchars($value) ?>"
-                            <?= ($old['category'] ?? '') === $value ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($label) ?>
+                <?php foreach ($categories as $cat): ?>
+                    <option value="<?= $cat['id'] ?>"
+                            <?= ($old['category_id'] ?? '') == $cat['id'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($cat['name']) ?>
+                        <?php if (!empty($cat['default_branch_name'])): ?>
+                            (Assigned to: <?= htmlspecialchars($cat['default_branch_name']) ?>)
+                        <?php endif; ?>
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -115,11 +118,11 @@
     let marker;
     
     // Default location (can be changed to your city's coordinates)
-    const defaultLat = 33.5731;
-    const defaultLng = -7.5898;
+    const defaultLat = 35.640222;
+    const defaultLng = 10.888000;
     
     function initMap() {
-        map = L.map('map').setView([defaultLat, defaultLng], 13);
+        map = L.map('map').setView([defaultLat, defaultLng], 15);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
@@ -208,8 +211,10 @@
     document.getElementById('category').addEventListener('change', function() {
         const detailGroup = document.getElementById('categoryDetailGroup');
         const detailInput = document.getElementById('category_detail');
+        const selectedOption = this.options[this.selectedIndex];
+        const selectedText = selectedOption ? selectedOption.text : '';
 
-        if (this.value === 'others') {
+        if (selectedText.toLowerCase().includes('others')) {
             detailGroup.style.display = 'block';
             detailInput.required = true;
         } else {
@@ -222,7 +227,9 @@
     // Initialize category detail on page load if "others" is pre-selected
     document.addEventListener('DOMContentLoaded', function() {
         const categorySelect = document.getElementById('category');
-        if (categorySelect.value === 'others') {
+        const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+        const selectedText = selectedOption ? selectedOption.text : '';
+        if (selectedText.toLowerCase().includes('others')) {
             document.getElementById('categoryDetailGroup').style.display = 'block';
             document.getElementById('category_detail').required = true;
         }

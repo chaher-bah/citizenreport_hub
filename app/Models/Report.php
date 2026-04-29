@@ -8,17 +8,6 @@ class Report extends Model
     protected string $table = 'reports';
 
     /**
-     * Valid report categories
-     */
-    public const CATEGORIES = [
-        'pothole' => 'Pothole',
-        'road_illumination' => 'Road Illumination',
-        'security_concerns' => 'Security Concerns',
-        'drivers_disobey_rules' => 'Drivers Disobey Rules',
-        'others' =>'Others'
-    ];
-
-    /**
      * Valid report statuses
      */
     public const STATUSES = [
@@ -54,7 +43,7 @@ class Report extends Model
 
         return $this->create([
             'user_id' => $userId,
-            'category' => $data['category'],
+            'category_id' => $data['category_id'],
             'category_detail' => $data['category_detail'] ?? null,
             'description' => $data['description'],
             'latitude' => $data['latitude'],
@@ -77,12 +66,14 @@ class Report extends Model
      */
     public function getByUserId(int $userId): array
     {
-        $sql = "SELECT r.*, u.cin as user_cin 
+        $sql = "SELECT r.*, c.name as category_name, c.description as category_description,
+                       u.cin as user_cin
                 FROM {$this->table} r
+                JOIN categories c ON r.category_id = c.id
                 JOIN users u ON r.user_id = u.id
                 WHERE r.user_id = :user_id
                 ORDER BY r.created_at DESC";
-        
+
         return $this->db->fetchAll($sql, ['user_id' => $userId]);
     }
 
@@ -168,9 +159,11 @@ class Report extends Model
      */
     public function getCountByCategory(): array
     {
-        $sql = "SELECT category, COUNT(*) as count
-                FROM {$this->table}
-                GROUP BY category";
+        $sql = "SELECT c.id, c.name, COUNT(r.id) as count
+                FROM categories c
+                LEFT JOIN {$this->table} r ON r.category_id = c.id
+                GROUP BY c.id, c.name
+                ORDER BY c.name";
 
         return $this->db->fetchAll($sql);
     }
@@ -178,19 +171,20 @@ class Report extends Model
     /**
      * Get reports with pagination, filters, and search
      */
-    public function getPaginated(int $page = 1, int $perPage = 10, string $category = '', string $status = '', string $search = ''): array
+    public function getPaginated(int $page = 1, int $perPage = 10, int $categoryId = 0, string $status = '', string $search = ''): array
     {
         $offset = ($page - 1) * $perPage;
-        $sql = "SELECT r.*, u.cin as user_cin, u.email as user_email
+        $sql = "SELECT r.*, c.name as category_name, u.cin as user_cin, u.email as user_email
                 FROM {$this->table} r
+                JOIN categories c ON r.category_id = c.id
                 JOIN users u ON r.user_id = u.id
                 WHERE 1=1";
         $params = [];
 
         // Filter by category
-        if (!empty($category)) {
-            $sql .= " AND r.category = :category";
-            $params['category'] = $category;
+        if ($categoryId > 0) {
+            $sql .= " AND r.category_id = :category_id";
+            $params['category_id'] = $categoryId;
         }
 
         // Filter by status
@@ -221,16 +215,17 @@ class Report extends Model
     /**
      * Get total count with filters (for pagination)
      */
-    public function getCountWithFilters(string $category = '', string $status = '', string $search = ''): int
+    public function getCountWithFilters(int $categoryId = 0, string $status = '', string $search = ''): int
     {
         $sql = "SELECT COUNT(*) as count
                 FROM {$this->table} r
+                JOIN categories c ON r.category_id = c.id
                 WHERE 1=1";
         $params = [];
 
-        if (!empty($category)) {
-            $sql .= " AND r.category = :category";
-            $params['category'] = $category;
+        if ($categoryId > 0) {
+            $sql .= " AND r.category_id = :category_id";
+            $params['category_id'] = $categoryId;
         }
 
         if (!empty($status)) {
@@ -258,7 +253,15 @@ class Report extends Model
      */
     public function getWithMediaAndAssignment(int $id): ?array
     {
-        $report = $this->find($id);
+        $sql = "SELECT r.*, c.name as category_name, c.description as category_description,
+                       u.cin as user_cin, u.email as user_email
+                FROM {$this->table} r
+                JOIN categories c ON r.category_id = c.id
+                JOIN users u ON r.user_id = u.id
+                WHERE r.id = :id
+                LIMIT 1";
+
+        $report = $this->db->fetchOne($sql, ['id' => $id]);
         if (!$report) {
             return null;
         }

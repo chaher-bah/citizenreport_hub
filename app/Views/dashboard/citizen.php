@@ -21,6 +21,12 @@
         <h3 style="font-size: 2.5rem; color: #28a745;"><?= $stats['resolved'] ?></h3>
         <p style="color: #666;">Resolved</p>
     </div>
+    <?php if ($stats['unresolved'] > 0): ?>
+    <div class="card text-center" style="border: 2px solid #dc3545;">
+        <h3 style="font-size: 2.5rem; color: #dc3545;"><?= $stats['unresolved'] ?></h3>
+        <p style="color: #666; font-weight: bold;">Unresolved</p>
+    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Reports Table -->
@@ -50,7 +56,7 @@
                         <td>
                             <strong><?= htmlspecialchars($report['ticket_id']) ?></strong>
                         </td>
-                        <td><?= htmlspecialchars($report['category_label']) ?></td>
+                        <td><?= htmlspecialchars($report['category_name'] ?? 'N/A') ?></td>
                         <td>
                             <span class="badge badge-<?= htmlspecialchars($report['status']) ?>">
                                 <?= htmlspecialchars($report['status_label']) ?>

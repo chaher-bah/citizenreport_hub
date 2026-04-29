@@ -28,7 +28,6 @@ class DashboardController extends Controller
 
         // Format reports for display
         foreach ($reports as &$report) {
-            $report['category_label'] = Report::CATEGORIES[$report['category']] ?? $report['category'];
             $report['status_label'] = Report::STATUSES[$report['status']] ?? $report['status'];
         }
 
@@ -40,61 +39,28 @@ class DashboardController extends Controller
     }
 
     /**
-     * Worker dashboard (admin)
-     */
-    public function workerDashboard(): void
-    {
-        $this->requireWorker();
-
-        $reports = $this->reportModel->getAllWithUserInfo();
-        $statusCounts = $this->reportModel->getCountByStatus();
-
-        // Format status counts
-        $stats = [
-            'pending' => 0,
-            'in_progress' => 0,
-            'resolved' => 0,
-            'rejected' => 0,
-            'total' => count($reports),
-        ];
-
-        foreach ($statusCounts as $count) {
-            $stats[$count['status']] = (int) $count['count'];
-        }
-
-        // Format reports for display
-        foreach ($reports as &$report) {
-            $report['category_label'] = Report::CATEGORIES[$report['category']] ?? $report['category'];
-            $report['status_label'] = Report::STATUSES[$report['status']] ?? $report['status'];
-        }
-
-        $this->viewWithLayout('dashboard/worker', [
-            'title' => 'Admin Dashboard',
-            'reports' => $reports,
-            'stats' => $stats,
-            'statuses' => Report::STATUSES,
-            'categories' => Report::CATEGORIES,
-        ]);
-    }
-
-    /**
      * Get citizen statistics
      */
     private function getCitizenStats(int $userId): array
     {
         $reports = $this->reportModel->getByUserId($userId);
-        
+
         $stats = [
             'total' => count($reports),
             'pending' => 0,
             'in_progress' => 0,
             'resolved' => 0,
             'rejected' => 0,
+            'unresolved' => 0, // pending + in_progress
         ];
 
         foreach ($reports as $report) {
             if (isset($stats[$report['status']])) {
                 $stats[$report['status']]++;
+            }
+            // Count unresolved
+            if (in_array($report['status'], ['pending', 'in_progress'])) {
+                $stats['unresolved']++;
             }
         }
 

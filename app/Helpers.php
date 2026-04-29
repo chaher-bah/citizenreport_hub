@@ -209,7 +209,7 @@ function requireCitizen(): void
     requireAuth();
     if (!isCitizen()) {
         $_SESSION['flash']['error'] = 'Access denied. Citizen privileges required.';
-        redirect('/admin/dashboard');
+        redirect(BASE_URL.'/admin/dashboard');
     }
 }
 

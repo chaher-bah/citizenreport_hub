@@ -9,6 +9,8 @@ class ReportController extends Controller
     private Report $reportModel;
     private ReportMedia $reportMediaModel;
     private StatusUpdate $statusUpdateModel;
+    private Assignment $assignmentModel;
+    private Category $categoryModel;
     private FileUploadService $uploadService;
     private GeoService $geoService;
 
@@ -18,6 +20,8 @@ class ReportController extends Controller
         $this->reportModel = new Report();
         $this->reportMediaModel = new ReportMedia();
         $this->statusUpdateModel = new StatusUpdate();
+        $this->assignmentModel = new Assignment();
+        $this->categoryModel = new Category();
         $this->uploadService = new FileUploadService();
         $this->geoService = new GeoService();
     }
@@ -29,9 +33,11 @@ class ReportController extends Controller
     {
         $this->requireCitizen();
 
+        $categories = $this->categoryModel->getAllWithBranch();
+
         $this->viewWithLayout('report/create', [
             'title' => 'Submit a Report',
-            'categories' => Report::CATEGORIES,
+            'categories' => $categories,
             'error' => $this->getFlash('error'),
             'success' => $this->getFlash('success'),
             'old' => $_SESSION['old_input'] ?? [],
@@ -47,18 +53,18 @@ class ReportController extends Controller
     {
         $this->requireCitizen();
 
-        $category = $this->post('category', '');
+        $categoryId = (int) $this->post('category_id', 0);
         $categoryDetail = trim($this->post('category_detail', ''));
         $description = trim($this->post('description', ''));
         $latitude = $this->post('latitude', '');
         $longitude = $this->post('longitude', '');
 
         // Validate input
-        $errors = $this->validateReport($category, $categoryDetail, $description, $latitude, $longitude);
+        $errors = $this->validateReport($categoryId, $categoryDetail, $description, $latitude, $longitude);
 
         if (!empty($errors)) {
             $_SESSION['old_input'] = [
-                'category' => $category,
+                'category_id' => $categoryId,
                 'category_detail' => $categoryDetail,
                 'description' => $description,
                 'latitude' => $latitude,
@@ -76,7 +82,7 @@ class ReportController extends Controller
             
             if (!$uploadResult['success'] && !empty($uploadResult['errors'])) {
                 $_SESSION['old_input'] = [
-                    'category' => $category,
+                    'category_id' => $categoryId,
                     'category_detail' => $categoryDetail,
                     'description' => $description,
                     'latitude' => $latitude,
@@ -98,8 +104,8 @@ class ReportController extends Controller
         
         try {
             $reportData = [
-                'category' => $category,
-                'category_detail' => ($category === 'others') ? 'others-' . $categoryDetail : null,
+                'category_id' => $categoryId,
+                'category_detail' => ($categoryDetail !== '') ? 'others-' . $categoryDetail : null,
                 'description' => $description,
                 'latitude' => $coords['latitude'],
                 'longitude' => $coords['longitude'],
@@ -109,6 +115,12 @@ class ReportController extends Controller
 
             if (!$reportId) {
                 throw new Exception('Failed to create report.');
+            }
+
+            // Auto-assign to category's default branch
+            $category = $this->categoryModel->find($categoryId);
+            if (!empty($category['default_branch_id'])) {
+                $this->assignmentModel->assignReport($reportId, (int) $category['default_branch_id']);
             }
 
             // Save media files
@@ -180,14 +192,14 @@ class ReportController extends Controller
         $this->requireAuth();
 
         $reportId = (int) $this->get('id', 0);
-        
+
         if ($reportId <= 0) {
             $this->setFlash('error', 'Invalid report ID.');
             $this->redirectBack();
             return;
         }
 
-        $report = $this->reportModel->getWithMedia($reportId);
+        $report = $this->reportModel->getWithMediaAndAssignment($reportId);
 
         if (!$report) {
             $this->setFlash('error', 'Report not found.');
@@ -213,8 +225,8 @@ class ReportController extends Controller
             'report' => $report,
             'statusUpdates' => $statusUpdates,
             'statuses' => Report::STATUSES,
-            'categories' => Report::CATEGORIES,
             'geoService' => $this->geoService,
+            'isWorker' => $isWorker,
         ]);
     }
 
@@ -226,7 +238,7 @@ class ReportController extends Controller
         $this->requireAuth();
 
         $ticketId = $this->get('ticket', '');
-        
+
         if (empty($ticketId)) {
             $this->setFlash('error', 'Invalid ticket ID.');
             $this->redirectBack();
@@ -259,8 +271,8 @@ class ReportController extends Controller
             'report' => $report,
             'statusUpdates' => $statusUpdates,
             'statuses' => Report::STATUSES,
-            'categories' => Report::CATEGORIES,
             'geoService' => $this->geoService,
+            'isWorker' => $isWorker,
         ]);
     }
 
@@ -268,7 +280,7 @@ class ReportController extends Controller
      * Validate report input
      */
     private function validateReport(
-        string $category,
+        int $categoryId,
         string $categoryDetail,
         string $description,
         $latitude,
@@ -277,12 +289,15 @@ class ReportController extends Controller
         $errors = [];
 
         // Category validation
-        if (empty($category)) {
+        if ($categoryId <= 0) {
             $errors[] = 'Please select a category.';
-        } elseif (!array_key_exists($category, Report::CATEGORIES)) {
-            $errors[] = 'Invalid category selected.';
-        } elseif ($category === 'others' && empty($categoryDetail)) {
-            $errors[] = 'Please specify the issue type when selecting Others.';
+        } else {
+            $category = $this->categoryModel->find($categoryId);
+            if (!$category) {
+                $errors[] = 'Invalid category selected.';
+            } elseif ($category['name'] === 'Others' && empty($categoryDetail)) {
+                $errors[] = 'Please specify the issue type when selecting Others.';
+            }
         }
 
         // Description validation

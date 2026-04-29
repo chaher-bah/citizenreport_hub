@@ -349,6 +349,8 @@
                     </span>
                     <?php if ($_SESSION['user']['role'] === 'worker'): ?>
                         <a href="<?= BASE_URL ?>/admin/dashboard">Dashboard</a>
+                        <a href="<?= BASE_URL ?>/admin/categories">Categories</a>
+                        <a href="<?= BASE_URL ?>/admin/branches">Branches</a>
                     <?php else: ?>
                         <a href="<?= BASE_URL ?>/dashboard">Dashboard</a>
                         <a href="<?= BASE_URL ?>/report/create">New Report</a>
