@@ -4,9 +4,6 @@
 // Start session
 session_start();
 
-// Error reporting (disable in production)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 // Define base path
 define('BASE_PATH', dirname(__DIR__));
@@ -122,7 +119,7 @@ $router->get('/admin/report/view', [AdminController::class, 'viewReport'], [Auth
 
 // Update Status (Worker)
 $router->post('/admin/report/update-status', [AdminController::class, 'updateStatus'], [AuthMiddleware::class, WorkerMiddleware::class]);
-
+$router->post('/admin/report/delete', [AdminController::class, 'deleteReport'], [AuthMiddleware::class, WorkerMiddleware::class]);
 // Assign Branch (Worker)
 $router->post('/admin/report/assign', [AdminController::class, 'assignBranch'], [AuthMiddleware::class, WorkerMiddleware::class]);
 
@@ -138,6 +135,13 @@ $router->post('/admin/branches/create', [AdminController::class, 'createBranch']
 $router->post('/admin/branches/update', [AdminController::class, 'updateBranch'], [AuthMiddleware::class, WorkerMiddleware::class]);
 $router->post('/admin/branches/delete', [AdminController::class, 'deleteBranch'], [AuthMiddleware::class, WorkerMiddleware::class]);
 
+
+// Broadcasts
+$router->get('/broadcasts', [BroadcastController::class, 'index'], [AuthMiddleware::class]);
+$router->get('/admin/broadcasts', [BroadcastController::class, 'manage'], [AuthMiddleware::class, WorkerMiddleware::class]);
+$router->post('/admin/broadcasts/create', [BroadcastController::class, 'create'], [AuthMiddleware::class, WorkerMiddleware::class]);
+$router->post('/admin/broadcasts/update', [BroadcastController::class, 'update'], [AuthMiddleware::class, WorkerMiddleware::class]);
+$router->post('/admin/broadcasts/delete', [BroadcastController::class, 'delete'], [AuthMiddleware::class, WorkerMiddleware::class]);
 // ============== Dispatch ==============
 
 try {

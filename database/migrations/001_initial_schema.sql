@@ -60,7 +60,9 @@ CREATE TABLE IF NOT EXISTS broadcasts (
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_created_by (created_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
+ALTER TABLE broadcasts 
+ADD COLUMN scheduled_at TIMESTAMP NULL DEFAULT NULL AFTER created_at,
+ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER scheduled_at;
 -- Assignments table
 CREATE TABLE IF NOT EXISTS assignments (
     id INT AUTO_INCREMENT PRIMARY KEY,

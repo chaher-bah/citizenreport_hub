@@ -351,9 +351,33 @@
                         <a href="<?= BASE_URL ?>/admin/dashboard">Dashboard</a>
                         <a href="<?= BASE_URL ?>/admin/categories">Categories</a>
                         <a href="<?= BASE_URL ?>/admin/branches">Branches</a>
+                        <a href="<?= BASE_URL ?>/admin/broadcasts" style="position:relative;">
+                            📢 Broadcasts
+                            <?php 
+                                $bModel = new Broadcast();
+                                $bCount = $bModel->getCount();
+                                if ($bCount > 0): 
+                            ?>
+                                <span style="position:absolute; top:-6px; right:-8px; background:#dc3545; color:white; border-radius:50%; width:18px; height:18px; font-size:0.7rem; display:flex; align-items:center; justify-content:center; font-weight:bold;">
+                                    <?= $bCount ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
                     <?php else: ?>
                         <a href="<?= BASE_URL ?>/dashboard">Dashboard</a>
                         <a href="<?= BASE_URL ?>/report/create">New Report</a>
+                        <a href="<?= BASE_URL ?>/broadcasts" style="position:relative;">
+                            📢 Broadcasts
+                            <?php 
+                                $bModel = new Broadcast();
+                                $bCount = $bModel->getCount();
+                                if ($bCount > 0): 
+                            ?>
+                                <span style="position:absolute; top:-6px; right:-8px; background:#dc3545; color:white; border-radius:50%; width:18px; height:18px; font-size:0.7rem; display:flex; align-items:center; justify-content:center; font-weight:bold;">
+                                    <?= $bCount ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
                     <?php endif; ?>
                     <a href="<?= BASE_URL ?>/auth/logout">Logout</a>
                 <?php else: ?>

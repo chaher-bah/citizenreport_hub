@@ -461,4 +461,25 @@ class AdminController extends Controller
 
         $this->redirect(BASE_URL . '/admin/branches');
     }
+    public function deleteReport(): void
+{
+    $this->requireWorker();
+
+    $reportId = (int) $this->post('report_id', 0);
+
+    if ($reportId <= 0) {
+        $this->setFlash('error', 'Invalid report ID.');
+        $this->redirect(BASE_URL . '/admin/dashboard');
+        return;
+    }
+
+    try {
+        $this->reportModel->delete($reportId);
+        $this->setFlash('success', 'Report deleted successfully.');
+    } catch (Exception $e) {
+        $this->setFlash('error', 'Failed to delete report.');
+    }
+
+    $this->redirect(BASE_URL . '/admin/dashboard');
+}
 }

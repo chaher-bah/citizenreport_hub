@@ -2,8 +2,13 @@
     <div class="d-flex justify-between align-center mb-3">
         <h1>📋 Report Details (Worker View)</h1>
         <a href="<?= BASE_URL ?>/admin/dashboard" class="btn btn-secondary">
-            ← Back to Dashboard
-        </a>
+    ← Back to Dashboard
+</a>
+<form method="POST" action="<?= BASE_URL ?>/admin/report/delete" style="display:inline;"
+      onsubmit="return confirm('Are you sure you want to delete this report? This cannot be undone.');">
+    <input type="hidden" name="report_id" value="<?= $report['id'] ?>">
+    <button type="submit" class="btn btn-danger">🗑️ Delete Report</button>
+</form>
     </div>
 
     <!-- Report Header -->
